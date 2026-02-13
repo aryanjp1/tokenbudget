@@ -68,10 +68,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/tokenbudget"
-Documentation = "https://github.com/yourusername/tokenbudget#readme"
-Repository = "https://github.com/yourusername/tokenbudget"
-Issues = "https://github.com/yourusername/tokenbudget/issues"
+Homepage = "https://github.com/aryanjp1/tokenbudget"
+Documentation = "https://github.com/aryanjp1/tokenbudget#readme"
+Repository = "https://github.com/aryanjp1/tokenbudget"
+Issues = "https://github.com/aryanjp1/tokenbudget/issues"
 
 [tool.hatch.build.targets.sdist]
 include = [
