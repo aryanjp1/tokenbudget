@@ -101,6 +101,9 @@ class BudgetContext:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit the budget context."""
         _budget_context.set(None)
+        # Check limits when exiting context (if no exception occurred)
+        if exc_type is None:
+            self.check_limits()
 
 
 def get_current_budget() -> Optional[BudgetContext]:
@@ -112,11 +115,47 @@ def get_current_budget() -> Optional[BudgetContext]:
     return _budget_context.get()
 
 
+class _BudgetDecorator:
+    """Helper class to make budget work as both decorator and context manager."""
+
+    def __init__(
+        self,
+        max_cost_usd: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        tracker: Optional[TokenTracker] = None,
+    ) -> None:
+        """Initialize decorator/context manager."""
+        self.max_cost_usd = max_cost_usd
+        self.max_tokens = max_tokens
+        self.tracker = tracker
+        self._context: Optional[BudgetContext] = None
+
+    def __call__(self, func: F) -> F:
+        """Use as decorator."""
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            with BudgetContext(self.max_cost_usd, self.max_tokens, self.tracker):
+                return func(*args, **kwargs)
+
+        return cast(F, wrapper)
+
+    def __enter__(self) -> BudgetContext:
+        """Use as context manager."""
+        self._context = BudgetContext(self.max_cost_usd, self.max_tokens, self.tracker)
+        return self._context.__enter__()
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager."""
+        if self._context:
+            self._context.__exit__(exc_type, exc_val, exc_tb)
+
+
 def budget(
     max_cost_usd: Optional[float] = None,
     max_tokens: Optional[int] = None,
     tracker: Optional[TokenTracker] = None,
-) -> Any:
+) -> _BudgetDecorator:
     """Decorator or context manager for budget enforcement.
 
     Can be used as a decorator:
@@ -134,38 +173,10 @@ def budget(
         tracker: TokenTracker instance. Default: None (create new tracker).
 
     Returns:
-        BudgetContext when used as context manager, or decorated function.
+        _BudgetDecorator that can be used as decorator or context manager.
 
     Raises:
         BudgetExceeded: If cost limit is exceeded.
         TokenLimitReached: If token limit is exceeded.
     """
-
-    def decorator(func: F) -> F:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            with BudgetContext(max_cost_usd, max_tokens, tracker) as ctx:
-                result = func(*args, **kwargs)
-                ctx.check_limits()
-                return result
-
-        return cast(F, wrapper)
-
-    # If called without arguments, return context manager
-    if max_cost_usd is None and max_tokens is None and tracker is not None:
-        # Called as @budget(tracker=...)
-        return decorator
-
-    # If used as context manager
-    if callable(max_cost_usd):
-        # Called as @budget without parentheses
-        func = max_cost_usd
-        return decorator(func)
-
-    # Return both decorator and context manager
-    context = BudgetContext(max_cost_usd, max_tokens, tracker)
-
-    # Add decorator capability to context
-    context.__call__ = decorator  # type: ignore
-
-    return context
+    return _BudgetDecorator(max_cost_usd, max_tokens, tracker)
