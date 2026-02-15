@@ -16,7 +16,7 @@ from .pricing import calculate_cost, get_price, list_models, register_model, Mod
 from .reports import export_csv, export_json, generate_table_report
 from .tracker import CacheStats, TokenTracker, Usage
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     # Core
