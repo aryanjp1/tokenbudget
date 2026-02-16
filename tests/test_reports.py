@@ -49,18 +49,20 @@ def test_export_csv():
         provider="anthropic",
     )
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
-        export_csv(tracker, f.name)
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
+        filepath = f.name
+
+    try:
+        export_csv(tracker, filepath)
 
         # Read and verify
-        with open(f.name, "r") as rf:
+        with open(filepath, "r") as rf:
             content = rf.read()
             assert "provider,calls,total_tokens" in content
             assert "openai" in content
             assert "anthropic" in content
-
-        # Clean up
-        Path(f.name).unlink()
+    finally:
+        Path(filepath).unlink(missing_ok=True)
 
 
 def test_export_json():
@@ -75,20 +77,22 @@ def test_export_json():
         provider="anthropic",
     )
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        export_json(tracker, f.name)
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+        filepath = f.name
+
+    try:
+        export_json(tracker, filepath)
 
         # Read and verify
-        with open(f.name, "r") as rf:
+        with open(filepath, "r") as rf:
             data = json.load(rf)
             assert "total" in data
             assert "by_provider" in data
             assert "cache_stats" in data
             assert "openai" in data["by_provider"]
             assert "anthropic" in data["by_provider"]
-
-        # Clean up
-        Path(f.name).unlink()
+    finally:
+        Path(filepath).unlink(missing_ok=True)
 
 
 def test_report_with_cache():
