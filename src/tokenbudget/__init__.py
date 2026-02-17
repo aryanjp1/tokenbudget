@@ -12,7 +12,7 @@ from .exceptions import (
     TokenBudgetError,
     TokenLimitReached,
 )
-from .pricing import calculate_cost, get_price, list_models, register_model, ModelPrice
+from .pricing import calculate_cost, get_price, list_models, refresh_pricing, register_model, ModelPrice
 from .reports import export_csv, export_json, generate_table_report
 from .tracker import CacheStats, TokenTracker, Usage
 
@@ -33,6 +33,7 @@ __all__ = [
     "list_models",
     "calculate_cost",
     "ModelPrice",
+    "refresh_pricing",
     # Reports
     "generate_table_report",
     "export_csv",

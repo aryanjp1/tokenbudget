@@ -89,7 +89,6 @@ allow-direct-references = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-asyncio_mode = "auto"
 addopts = "--cov=tokenbudget --cov-report=term-missing"
 
 [tool.mypy]
